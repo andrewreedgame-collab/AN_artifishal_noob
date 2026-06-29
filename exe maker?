@@ -1,0 +1,44 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Compile
+        run: |
+          mkdir out
+          javac --module-path "javafx/lib" --add-modules javafx.controls,javafx.fxml -d out src/*.java
+
+      - name: Create JAR
+        run: |
+          jar --create --file AIChat.jar -C out .
+
+      - name: Package EXE
+        run: |
+          jpackage ^
+            --type exe ^
+            --name AIChat ^
+            --input . ^
+            --main-jar AIChat.jar ^
+            --main-class Main
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: AIChat-Windows
+          path: "*.exe"
